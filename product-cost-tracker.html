@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product Cost Tracker</title>
+<style>
+  :root{
+    --bg:#fdf7f4;
+    --card:#ffffff;
+    --ink:#2c2320;
+    --muted:#8a7b74;
+    --accent:#b5665a;
+    --accent-dark:#8f4a40;
+    --accent-light:#f3ded9;
+    --line:#ecdfda;
+    --good:#4a7a5e;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    padding-bottom:60px;
+  }
+  header{
+    background:var(--accent);
+    color:#fff;
+    padding:22px 20px 18px;
+    text-align:center;
+    border-radius:0 0 20px 20px;
+  }
+  header h1{margin:0;font-size:1.4rem;font-weight:700;}
+  header p{margin:4px 0 0;font-size:.85rem;opacity:.9;}
+  nav{
+    display:flex;
+    max-width:640px;
+    margin:16px auto 0;
+    padding:0 16px;
+    gap:8px;
+  }
+  nav button{
+    flex:1;
+    padding:10px 6px;
+    border:none;
+    border-radius:999px;
+    background:var(--card);
+    color:var(--muted);
+    font-size:.85rem;
+    font-weight:600;
+    cursor:pointer;
+    border:1px solid var(--line);
+  }
+  nav button.active{
+    background:var(--accent);
+    color:#fff;
+    border-color:var(--accent);
+  }
+  main{
+    max-width:640px;
+    margin:18px auto;
+    padding:0 16px;
+  }
+  .panel{display:none;}
+  .panel.active{display:block;}
+  .card{
+    background:var(--card);
+    border-radius:var(--radius);
+    padding:16px;
+    margin-bottom:14px;
+    box-shadow:0 1px 3px rgba(0,0,0,.05);
+    border:1px solid var(--line);
+  }
+  .card h2{margin:0 0 12px;font-size:1rem;color:var(--accent-dark);}
+  label{
+    display:block;
+    font-size:.78rem;
+    color:var(--muted);
+    margin:8px 0 4px;
+    font-weight:600;
+  }
+  input[type=text],input[type=number],select{
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid var(--line);
+    font-size:.95rem;
+    background:#fff;
+    color:var(--ink);
+  }
+  .row{display:flex;gap:10px;}
+  .row > *{flex:1;}
+  button.primary{
+    background:var(--accent);
+    color:#fff;
+    border:none;
+    padding:11px 16px;
+    border-radius:10px;
+    font-size:.9rem;
+    font-weight:700;
+    cursor:pointer;
+    width:100%;
+    margin-top:12px;
+  }
+  button.primary:active{background:var(--accent-dark);}
+  button.secondary{
+    background:var(--accent-light);
+    color:var(--accent-dark);
+    border:none;
+    padding:9px 14px;
+    border-radius:10px;
+    font-size:.85rem;
+    font-weight:700;
+    cursor:pointer;
+  }
+  button.link{
+    background:none;
+    border:none;
+    color:var(--accent);
+    font-size:.8rem;
+    font-weight:600;
+    cursor:pointer;
+    padding:4px 6px;
+  }
+  table{width:100%;border-collapse:collapse;font-size:.85rem;}
+  th{
+    text-align:left;
+    color:var(--muted);
+    font-size:.72rem;
+    text-transform:uppercase;
+    letter-spacing:.03em;
+    padding:6px 4px;
+    border-bottom:1px solid var(--line);
+  }
+  td{padding:8px 4px;border-bottom:1px solid var(--line);vertical-align:middle;}
+  .empty{
+    text-align:center;
+    color:var(--muted);
+    font-size:.85rem;
+    padding:20px 0;
+  }
+  .line-item{
+    display:flex;
+    gap:8px;
+    align-items:flex-end;
+    margin-bottom:8px;
+    padding-bottom:8px;
+    border-bottom:1px dashed var(--line);
+  }
+  .line-item .grow{flex:2;}
+  .line-item .small{flex:1;}
+  .line-item .del{
+    flex:0 0 auto;
+    background:none;
+    border:none;
+    color:#b04a4a;
+    font-size:1.1rem;
+    cursor:pointer;
+    padding:8px 4px;
+  }
+  .totals{
+    margin-top:14px;
+    padding-top:12px;
+    border-top:2px solid var(--line);
+  }
+  .totals .line{
+    display:flex;
+    justify-content:space-between;
+    font-size:.9rem;
+    margin-bottom:6px;
+    color:var(--muted);
+  }
+  .totals .line.charge{
+    font-size:1.25rem;
+    font-weight:800;
+    color:var(--good);
+    margin-top:8px;
+  }
+  .badge{
+    display:inline-block;
+    background:var(--accent-light);
+    color:var(--accent-dark);
+    font-size:.7rem;
+    font-weight:700;
+    padding:2px 8px;
+    border-radius:999px;
+  }
+  .stat-row{display:flex;gap:10px;}
+  .stat{
+    flex:1;
+    background:var(--accent-light);
+    border-radius:10px;
+    padding:10px;
+    text-align:center;
+  }
+  .stat .num{font-size:1.15rem;font-weight:800;color:var(--accent-dark);}
+  .stat .lbl{font-size:.68rem;color:var(--muted);text-transform:uppercase;}
+  .icon-btn{
+    background:none;border:none;cursor:pointer;font-size:.95rem;color:var(--muted);
+  }
+  .toast{
+    position:fixed;
+    bottom:20px;
+    left:50%;
+    transform:translateX(-50%);
+    background:var(--ink);
+    color:#fff;
+    padding:10px 18px;
+    border-radius:999px;
+    font-size:.85rem;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .25s;
+  }
+  .toast.show{opacity:1;}
+  footer{
+    text-align:center;
+    font-size:.72rem;
+    color:var(--muted);
+    margin-top:24px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>💇 Product Cost Tracker</h1>
+  <p>Know your product cost, charge it every time.</p>
+</header>
+
+<nav>
+  <button class="tab-btn active" data-tab="charge">New Charge</button>
+  <button class="tab-btn" data-tab="inventory">Inventory</button>
+  <button class="tab-btn" data-tab="history">History</button>
+  <button class="tab-btn" data-tab="settings">Settings</button>
+</nav>
+
+<main>
+
+  <!-- NEW CHARGE -->
+  <div class="panel active" id="panel-charge">
+    <div class="card">
+      <h2>Client & Service</h2>
+      <div class="row">
+        <div>
+          <label>Client name (optional)</label>
+          <input type="text" id="clientName" placeholder="e.g. Sarah M.">
+        </div>
+        <div>
+          <label>Service (optional)</label>
+          <input type="text" id="serviceName" placeholder="e.g. Full Balayage">
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Products Used</h2>
+      <div id="lineItems"></div>
+      <button class="secondary" id="addLineBtn" type="button">+ Add Product</button>
+
+      <div class="totals">
+        <div class="line"><span>Product cost</span><span id="totalCost">$0.00</span></div>
+        <div class="row">
+          <div>
+            <label>Markup % (added on top of cost)</label>
+            <input type="number" id="markupPct" min="0" step="1">
+          </div>
+        </div>
+        <div class="line charge"><span>Charge client</span><span id="chargeAmount">$0.00</span></div>
+      </div>
+
+      <button class="primary" id="saveChargeBtn" type="button">Save to History</button>
+    </div>
+  </div>
+
+  <!-- INVENTORY -->
+  <div class="panel" id="panel-inventory">
+    <div class="card">
+      <h2>Add Product</h2>
+      <label>Product name</label>
+      <input type="text" id="prodName" placeholder="e.g. Wella Color Tube">
+      <div class="row">
+        <div>
+          <label>Container size</label>
+          <input type="number" id="prodSize" min="0" step="0.01" placeholder="e.g. 2">
+        </div>
+        <div>
+          <label>Unit</label>
+          <select id="prodUnit">
+            <option value="oz">oz</option>
+            <option value="ml">ml</option>
+            <option value="g">g</option>
+            <option value="pump">pump</option>
+            <option value="application">application</option>
+            <option value="unit">unit</option>
+          </select>
+        </div>
+      </div>
+      <label>Price you paid ($)</label>
+      <input type="number" id="prodPrice" min="0" step="0.01" placeholder="e.g. 14.50">
+      <button class="primary" id="addProductBtn" type="button">Add to Inventory</button>
+    </div>
+
+    <div class="card">
+      <h2>Your Inventory</h2>
+      <table id="inventoryTable">
+        <thead>
+          <tr><th>Product</th><th>Cost / unit</th><th></th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="empty" id="inventoryEmpty">No products yet — add your first one above.</div>
+    </div>
+  </div>
+
+  <!-- HISTORY -->
+  <div class="panel" id="panel-history">
+    <div class="card">
+      <div class="stat-row">
+        <div class="stat"><div class="num" id="statCount">0</div><div class="lbl">Services logged</div></div>
+        <div class="stat"><div class="num" id="statCost">$0</div><div class="lbl">Total product cost</div></div>
+        <div class="stat"><div class="num" id="statCharged">$0</div><div class="lbl">Total charged</div></div>
+      </div>
+    </div>
+    <div class="card">
+      <h2>Past Charges</h2>
+      <table id="historyTable">
+        <thead>
+          <tr><th>Date</th><th>Client / Service</th><th>Cost</th><th>Charged</th><th></th></tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+      <div class="empty" id="historyEmpty">No charges saved yet.</div>
+    </div>
+  </div>
+
+  <!-- SETTINGS -->
+  <div class="panel" id="panel-settings">
+    <div class="card">
+      <h2>Default Markup</h2>
+      <label>Default markup % applied to new charges</label>
+      <input type="number" id="defaultMarkup" min="0" step="1">
+      <button class="primary" id="saveMarkupBtn" type="button">Save Default</button>
+    </div>
+    <div class="card">
+      <h2>Data</h2>
+      <p style="font-size:.85rem;color:var(--muted);margin-top:0;">Everything is saved automatically in this browser. Use these buttons to back up or move your data to another device.</p>
+      <button class="secondary" id="exportBtn" type="button">Export Data (.json)</button>
+      <label style="margin-top:14px;">Import Data</label>
+      <input type="file" id="importFile" accept=".json">
+    </div>
+  </div>
+
+</main>
+
+<footer>Product Cost Tracker — data stays on this device</footer>
+<div class="toast" id="toast"></div>
+
+<script>
+const STORAGE_KEY = "pct_data_v1";
+
+function loadData(){
+  const raw = localStorage.getItem(STORAGE_KEY);
+  if(raw){
+    try{ return JSON.parse(raw); }catch(e){}
+  }
+  return { products:[], history:[], defaultMarkup:20 };
+}
+function saveData(){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+let state = loadData();
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+function uid(){ return Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function fmt(n){ return '$' + (Math.round(n*100)/100).toFixed(2); }
+
+// ---------- TABS ----------
+document.querySelectorAll('.tab-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('panel-'+btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab==='inventory') renderInventory();
+    if(btn.dataset.tab==='history') renderHistory();
+    if(btn.dataset.tab==='charge') renderLineItems();
+  });
+});
+
+// ---------- INVENTORY ----------
+function costPerUnit(p){
+  if(!p.size || p.size<=0) return 0;
+  return p.price / p.size;
+}
+
+function renderInventory(){
+  const tbody = document.querySelector('#inventoryTable tbody');
+  tbody.innerHTML = '';
+  document.getElementById('inventoryEmpty').style.display = state.products.length ? 'none':'block';
+  state.products.forEach(p=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td>${p.name}<br><span class="badge">${p.size} ${p.unit} • ${fmt(p.price)}</span></td>
+      <td>${fmt(costPerUnit(p))}/${p.unit}</td>
+      <td><button class="icon-btn" onclick="deleteProduct('${p.id}')">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  refreshProductDropdowns();
+}
+
+function deleteProduct(id){
+  if(!confirm('Remove this product from inventory?')) return;
+  state.products = state.products.filter(p=>p.id!==id);
+  saveData();
+  renderInventory();
+}
+
+document.getElementById('addProductBtn').addEventListener('click', ()=>{
+  const name = document.getElementById('prodName').value.trim();
+  const size = parseFloat(document.getElementById('prodSize').value);
+  const unit = document.getElementById('prodUnit').value;
+  const price = parseFloat(document.getElementById('prodPrice').value);
+  if(!name || !size || size<=0 || isNaN(price) || price<0){
+    toast('Fill in name, size, and price'); return;
+  }
+  state.products.push({id:uid(), name, size, unit, price});
+  saveData();
+  document.getElementById('prodName').value='';
+  document.getElementById('prodSize').value='';
+  document.getElementById('prodPrice').value='';
+  renderInventory();
+  toast('Product added');
+});
+
+// ---------- NEW CHARGE ----------
+let currentLines = [{productId:'', amount:''}];
+
+function refreshProductDropdowns(){
+  document.querySelectorAll('.line-product').forEach(sel=>{
+    const current = sel.value;
+    sel.innerHTML = '<option value="">Select product…</option>' +
+      state.products.map(p=>`<option value="${p.id}">${p.name} (${p.unit})</option>`).join('');
+    sel.value = current;
+  });
+}
+
+function renderLineItems(){
+  const wrap = document.getElementById('lineItems');
+  wrap.innerHTML = '';
+  if(state.products.length===0){
+    wrap.innerHTML = '<div class="empty">Add products in the Inventory tab first.</div>';
+    updateTotals();
+    return;
+  }
+  currentLines.forEach((line, idx)=>{
+    const div = document.createElement('div');
+    div.className = 'line-item';
+    const unit = state.products.find(p=>p.id===line.productId)?.unit || '';
+    div.innerHTML = `
+      <div class="grow">
+        <label>Product</label>
+        <select class="line-product" data-idx="${idx}">
+          <option value="">Select product…</option>
+          ${state.products.map(p=>`<option value="${p.id}" ${p.id===line.productId?'selected':''}>${p.name} (${p.unit})</option>`).join('')}
+        </select>
+      </div>
+      <div class="small">
+        <label>Amount used ${unit?('('+unit+')'):''}</label>
+        <input type="number" class="line-amount" data-idx="${idx}" min="0" step="0.01" value="${line.amount}">
+      </div>
+      <button class="del" data-idx="${idx}" title="Remove">✕</button>
+    `;
+    wrap.appendChild(div);
+  });
+
+  wrap.querySelectorAll('.line-product').forEach(sel=>{
+    sel.addEventListener('change', e=>{
+      currentLines[e.target.dataset.idx].productId = e.target.value;
+      renderLineItems();
+      updateTotals();
+    });
+  });
+  wrap.querySelectorAll('.line-amount').forEach(inp=>{
+    inp.addEventListener('input', e=>{
+      currentLines[e.target.dataset.idx].amount = e.target.value;
+      updateTotals();
+    });
+  });
+  wrap.querySelectorAll('.del').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      currentLines.splice(e.target.dataset.idx,1);
+      if(currentLines.length===0) currentLines.push({productId:'', amount:''});
+      renderLineItems();
+      updateTotals();
+    });
+  });
+  updateTotals();
+}
+
+document.getElementById('addLineBtn').addEventListener('click', ()=>{
+  currentLines.push({productId:'', amount:''});
+  renderLineItems();
+});
+
+function computeCost(){
+  let total = 0;
+  currentLines.forEach(line=>{
+    const p = state.products.find(pr=>pr.id===line.productId);
+    const amt = parseFloat(line.amount);
+    if(p && !isNaN(amt) && amt>0){
+      total += costPerUnit(p) * amt;
+    }
+  });
+  return total;
+}
+
+function updateTotals(){
+  const cost = computeCost();
+  document.getElementById('totalCost').textContent = fmt(cost);
+  const markup = parseFloat(document.getElementById('markupPct').value) || 0;
+  const charge = cost * (1 + markup/100);
+  document.getElementById('chargeAmount').textContent = fmt(charge);
+}
+
+document.getElementById('markupPct').addEventListener('input', updateTotals);
+
+document.getElementById('saveChargeBtn').addEventListener('click', ()=>{
+  const cost = computeCost();
+  if(cost<=0){
+    toast('Add at least one product with an amount used'); return;
+  }
+  const markup = parseFloat(document.getElementById('markupPct').value) || 0;
+  const charge = cost * (1 + markup/100);
+  state.history.push({
+    id: uid(),
+    date: new Date().toISOString(),
+    client: document.getElementById('clientName').value.trim(),
+    service: document.getElementById('serviceName').value.trim(),
+    cost, markup, charge,
+    lines: currentLines.filter(l=>l.productId && l.amount)
+  });
+  saveData();
+  toast('Saved to history');
+  // reset form
+  document.getElementById('clientName').value='';
+  document.getElementById('serviceName').value='';
+  document.getElementById('markupPct').value = state.defaultMarkup || 0;
+  currentLines = [{productId:'', amount:''}];
+  renderLineItems();
+});
+
+// ---------- HISTORY ----------
+function renderHistory(){
+  const tbody = document.querySelector('#historyTable tbody');
+  tbody.innerHTML = '';
+  document.getElementById('historyEmpty').style.display = state.history.length ? 'none':'block';
+  const sorted = [...state.history].sort((a,b)=> new Date(b.date)-new Date(a.date));
+  sorted.forEach(h=>{
+    const tr = document.createElement('tr');
+    const d = new Date(h.date);
+    const label = [h.client, h.service].filter(Boolean).join(' • ') || '—';
+    tr.innerHTML = `
+      <td>${d.toLocaleDateString()}</td>
+      <td>${label}</td>
+      <td>${fmt(h.cost)}</td>
+      <td><strong>${fmt(h.charge)}</strong></td>
+      <td><button class="icon-btn" onclick="deleteHistory('${h.id}')">✕</button></td>
+    `;
+    tbody.appendChild(tr);
+  });
+  document.getElementById('statCount').textContent = state.history.length;
+  document.getElementById('statCost').textContent = fmt(state.history.reduce((s,h)=>s+h.cost,0));
+  document.getElementById('statCharged').textContent = fmt(state.history.reduce((s,h)=>s+h.charge,0));
+}
+
+function deleteHistory(id){
+  if(!confirm('Delete this record?')) return;
+  state.history = state.history.filter(h=>h.id!==id);
+  saveData();
+  renderHistory();
+}
+
+// ---------- SETTINGS ----------
+document.getElementById('defaultMarkup').value = state.defaultMarkup || 0;
+document.getElementById('saveMarkupBtn').addEventListener('click', ()=>{
+  const v = parseFloat(document.getElementById('defaultMarkup').value) || 0;
+  state.defaultMarkup = v;
+  saveData();
+  toast('Default markup saved');
+});
+
+document.getElementById('exportBtn').addEventListener('click', ()=>{
+  const blob = new Blob([JSON.stringify(state, null, 2)], {type:'application/json'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'product-cost-tracker-backup.json';
+  a.click();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById('importFile').addEventListener('change', (e)=>{
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev)=>{
+    try{
+      const imported = JSON.parse(ev.target.result);
+      if(imported.products && imported.history){
+        state = imported;
+        saveData();
+        toast('Data imported');
+        renderInventory(); renderHistory();
+        document.getElementById('defaultMarkup').value = state.defaultMarkup || 0;
+      } else {
+        toast('Invalid file format');
+      }
+    }catch(err){
+      toast('Could not read file');
+    }
+  };
+  reader.readAsText(file);
+});
+
+// ---------- INIT ----------
+document.getElementById('markupPct').value = state.defaultMarkup || 0;
+renderInventory();
+renderHistory();
+renderLineItems();
+</script>
+
+</body>
+</html>
